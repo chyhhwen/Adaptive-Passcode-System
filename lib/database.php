@@ -69,7 +69,7 @@ class sql
         }
         catch (PDOException $e)
         {
-            echo 'error';
+            die();
         }
         unset($pdo);
         return $comments;
