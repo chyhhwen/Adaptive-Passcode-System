@@ -5,17 +5,39 @@ class router
     public $pass;
     public function get($url)
     {
-        switch($url)
+        if(@$this->check())
         {
-            case '/':
-                return "";
-            default:
-                return require "./views/error.php";
+            $temp = str_split($_SERVER['REQUEST_URI'],5);
+            $use = "";
+            for($i=1;$i<count($temp);$i++)
+            {
+                $use = $use.$temp[$i];
+            }
+            return $use;
         }
+        else
+        {
+            switch($url)
+            {
+                case '/':
+                    return "";
+                default:
+                    return require "./views/error.php";
+            }
+        }
+
     }
     public function check()
     {
-
+        $temp = str_split($_SERVER['REQUEST_URI'],5);
+        if($temp[0] == "/api/")
+        {
+            return true;
+        }
+        else
+        {
+            return false;
+        }
     }
     public function ref($a)
     {
