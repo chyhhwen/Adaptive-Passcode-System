@@ -26,5 +26,9 @@ class http
         }
         return $this->ip;
     }
+    public function time()
+    {
+        return date('Y-m-d-H-i-s');
+    }
 }
 ?>
