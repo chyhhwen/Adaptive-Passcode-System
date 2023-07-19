@@ -1,4 +1,5 @@
 <?php
+
 class sql
 {
     public $user;
@@ -72,6 +73,30 @@ class sql
         }
         unset($pdo);
         return $comments;
+    }
+    public function check($ip)
+    {
+        $check = false;
+        $pdo = $this->conn();
+        $sql = "SELECT * FROM `". $this->db ."`";
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute();
+        try
+        {
+            while($row = $stmt->fetch(PDO::FETCH_ASSOC))
+            {
+                if($row[$this->field[1]] == $ip)
+                {
+                    $check = true;
+                }
+            }
+        }
+        catch (PDOException $e)
+        {
+            die();
+        }
+        unset($pdo);
+        return $check;
     }
 }
 ?>

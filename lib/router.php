@@ -22,7 +22,9 @@ class router
                 case '/':
                     return "";
                 default:
-                    return require "./views/error.php";
+                    http_response_code(404);
+                    echo require "./views/error.php";
+                    die();
             }
         }
 
