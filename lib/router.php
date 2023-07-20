@@ -20,10 +20,14 @@ class router
             switch($url)
             {
                 case '/':
-                    return "";
+                    return require "./views/index.php";
+                case '/photo':
+                    return require "./views/photo.php";
+                case '/about':
+                    return require "./views/photo.php";
                 default:
                     http_response_code(404);
-                    echo require "./views/error.php";
+                    return require "./views/error.php";
                     die();
             }
         }

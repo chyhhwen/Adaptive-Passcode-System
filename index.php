@@ -16,7 +16,9 @@
     echo'
          <html>
             <head>
-            <link rel="stylesheet" href=".\public\index.css">
+            <link rel="stylesheet" href="./public/index.css">
+            <link rel="stylesheet" href="./public/photo.css">
+            <link rel="stylesheet" href="./public/about.css">
             <meta charset="UTF-8">
             <title>ChiXiao</title>
          </head>
@@ -31,11 +33,13 @@
         echo $sql->check($http->client_ip());
         echo require "./views/error.php";
         die();
+        $txt -> put_test("嘗試進入");
+        $txt -> write();
     }
     else
     {
-        $txt -> put_test("test");
-        $txt -> write();
+        /*$txt -> put_test("test");
+        $txt -> write();*/
         echo $router->get(@$_SERVER['REQUEST_URI']);
     }
 
