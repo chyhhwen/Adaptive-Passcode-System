@@ -25,6 +25,10 @@ class router
                     return require "./views/photo.php";
                 case '/about':
                     return require "./views/photo.php";
+                case '/public':
+                    http_response_code(404);
+                    return require "./views/error.php";
+                    die();
                 default:
                     http_response_code(404);
                     return require "./views/error.php";
