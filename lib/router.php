@@ -1,8 +1,6 @@
 <?php
 class router
 {
-    public $user;
-    public $pass;
     public function get($url)
     {
         if(@$this->check())

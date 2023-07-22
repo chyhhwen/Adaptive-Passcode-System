@@ -129,6 +129,17 @@ nav a:hover
     margin-bottom:0.5em;
     color:white;
 }
+.put input[type='button']
+{
+    width: 5vw;
+    height:7vh;
+    font-size: 150%;
+    background: none;
+    border-radius:2em;
+    margin-top: 0.5vh;
+    margin-bottom:0.5em;
+    color:white;
+}
 .put input[type='password']
 {
     width: 20vw;
@@ -141,6 +152,54 @@ nav a:hover
     color:white;
 }
 .put span
+{
+    width: 5vw;
+    font-size: 180%;
+    font-weight: bold;
+    margin-top: 0.5vh;
+    margin-bottom:0.5em;
+}
+.login-page .put1
+{
+    width: 25vw;
+    backdrop-filter: blur(5px);
+    border-radius:2em;
+    border:1px solid;
+}
+.put1 input[type='text']
+{
+    width: 20vw;
+    height:7vh;
+    font-size: 150%;
+    background: none;
+    border-radius:2em;
+    margin-top: 0.5vh;
+    margin-bottom:0.5em;
+    color:white;
+}
+.put1 input[type='submit']
+{
+    width: 5vw;
+    height:7vh;
+    font-size: 150%;
+    background: none;
+    border-radius:2em;
+    margin-top: 0.5vh;
+    margin-bottom:0.5em;
+    color:white;
+}
+.put1 input[type='password']
+{
+    width: 20vw;
+    height:7vh;
+    font-size: 150%;
+    background: none;
+    border-radius:2em;
+    margin-top: 0.5vh;
+    margin-bottom:0.5em;
+    color:white;
+}
+.put1 span
 {
     width: 5vw;
     font-size: 180%;
