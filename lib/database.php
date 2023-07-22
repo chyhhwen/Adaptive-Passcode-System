@@ -98,7 +98,7 @@ class sql
         unset($pdo);
         return $check;
     }
-    public function login_check($ip)
+    public function login_check($user,$pass)
     {
         $check = false;
         $pdo = $this->conn();
@@ -109,9 +109,12 @@ class sql
         {
             while($row = $stmt->fetch(PDO::FETCH_ASSOC))
             {
-                if($row[$this->field[1]] == $ip)
+                if($row[$this->field[2]] == $user)
                 {
-                    $check = true;
+                    if($row[$this->field[3]] == $pass)
+                    {
+                        $check = true;
+                    }
                 }
             }
         }

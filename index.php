@@ -39,8 +39,6 @@
     }
     else
     {
-        /*$txt -> put_test("test");
-        $txt -> write();*/
         echo $router->get(@$_SERVER['REQUEST_URI']);
     }
 
