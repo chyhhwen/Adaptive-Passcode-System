@@ -188,6 +188,17 @@ nav a:hover
     margin-bottom:0.5em;
     color:white;
 }
+.put1 input[type='button']
+{
+    width: 5vw;
+    height:7vh;
+    font-size: 150%;
+    background: none;
+    border-radius:2em;
+    margin-top: 0.5vh;
+    margin-bottom:0.5em;
+    color:white;
+}
 .put1 input[type='password']
 {
     width: 20vw;

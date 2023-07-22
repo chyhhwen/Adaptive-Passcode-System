@@ -10,7 +10,7 @@ return"
                     <input type='password' name='pass' id='pass'>
                     <input type='submit' name='login' value='登入'>
                     <input type='button' name='register' value='註冊' id='register'>
-               
+               </div>
             </form>
             <form action='../defense/register' method='post'>
                 <div class='put1' style=\"display:none\" id='register'>
@@ -22,7 +22,8 @@ return"
                     <input type='password' name='pass' id='pass1'>
                     <span>確認</span>
                     <input type='password' id='repass1'>
-                    <input type='submit' name='register' value='註冊'>
+                    <input type='submit' name='register' value='註冊'> 
+                    <input type='button' name='return' value='返回' id='return'>
                 </div>
             </form>
         </div>

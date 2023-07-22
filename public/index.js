@@ -25,6 +25,11 @@ window.onload=()=>
         document.querySelector('.put').style.display="none";
         document.querySelector('.put1').style.display="block";
     }
+    document.querySelector('#return').onclick=()=>
+    {
+        document.querySelector('.put1').style.display="none";
+        document.querySelector('.put').style.display="block";
+    }
     document.querySelector('#name1').onblur=()=>
     {
         if((document.querySelector('#name1').value).length>10)
