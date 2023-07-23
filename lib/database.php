@@ -30,10 +30,10 @@ class sql
         }
         return $pdo;
     }
-    public function  add()
+    public function add($val)
     {
         $pdo = $this->conn();
-        $sql = "INSERT INTO `". $this->db ."` VALUES(?,?,?)";
+        $sql = "INSERT INTO `". $this->db ."` VALUES".$val;
         $sth = $pdo->prepare($sql);
         try
         {

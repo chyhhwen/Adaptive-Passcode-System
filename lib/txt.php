@@ -1,21 +1,21 @@
 <?php
-class txt
-{
-    public $comment;
-    public function put_test($data)
+    class txt
     {
-        $this -> comment = $data;
-    }
-    public function write()
-    {
-        $data = $this -> comment;
-        $dir = './log/'.$GLOBALS['time'];
-        $filename = $dir.'.txt';
-        if($fp = fopen($filename, 'w+'))
+        public $comment;
+        public function put_test($data)
         {
-            fwrite($fp, $data);
-            fclose($fp);
+            $this -> comment = $data;
+        }
+        public function write()
+        {
+            $data = $this -> comment;
+            $dir = './log/'.$GLOBALS['time'];
+            $filename = $dir.'.txt';
+            if($fp = fopen($filename, 'w+'))
+            {
+                fwrite($fp, $data);
+                fclose($fp);
+            }
         }
     }
-}
 ?>

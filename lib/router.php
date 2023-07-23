@@ -19,10 +19,28 @@ class router
             {
                 case '/':
                     return require "./views/index.php";
-                case '/photo':
-                    return require "./views/photo.php";
-                case '/about':
-                    return require "./views/photo.php";
+                case '/defen':
+                    include "./defense/login.php";
+                    $login = new login();
+                    if(@$_POST['user']!=NULL && @$_POST['pass']!=NULL)
+                    {
+                        if($login ->check(@$_POST['user'],@$_POST['pass']))
+                        {
+                            $_SESSION['index'] = true;
+                        }
+                        header('Location: http://localhost/');
+                        exit();
+                    }
+                    else if(@$_POST['name1']!=NULL && @$_POST['user1']!=NULL && @$_POST['pass1']!=NULL)
+                    {
+                        echo 'register';
+                    }
+                    else
+                    {
+                        header('Location: http://localhost/');
+                        exit();
+                    }
+                    break;
                 case '/public':
                     http_response_code(404);
                     return require "./views/error.php";

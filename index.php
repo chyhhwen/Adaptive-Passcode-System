@@ -1,6 +1,7 @@
 <?php
     date_default_timezone_set('Asia/Taipei');
-
+    session_set_cookie_params(0,'/','localhost');
+    session_start();
     include "./lib/router.php";
     include "./lib/http.php";
     include "./lib/database.php";
@@ -39,7 +40,14 @@
     }
     else
     {
-        echo $router->get(@$_SERVER['REQUEST_URI']);
+        if(@$_SESSION['index'])
+        {
+
+        }
+        else
+        {
+            echo $router->get(@$_SERVER['REQUEST_URI']);
+        }
     }
 
     echo '</html>';
