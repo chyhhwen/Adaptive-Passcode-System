@@ -1,6 +1,13 @@
 # php實作路由 v1.5
 ## YouJia
 ![](https://github.com/chyhhwen/route-php/blob/main/youjia.gif?raw=true)
+## 實現防禦
+- Cross-Site Scripting 
+- SQL Injection
+- Brute-force Attack
+- Routing
+- Data Encryption
+- New Passcode System
 ## 目錄 
 ┌ api \
 ├─backup 備份\
