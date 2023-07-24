@@ -1,26 +1,28 @@
-# php實作路由 v1.5
+# Adaptive Passcode System
 ## YouJia
 ![](https://github.com/chyhhwen/route-php/blob/main/youjia.gif?raw=true)
-## 實現防禦
-- Cross-Site Scripting 
-- SQL Injection
-- Brute-force Attack
+## Accomplish
 - Routing
 - Data Encryption
 - New Passcode System
-## 目錄 
+- Adaptive
+## Defense
+- Cross-Site Scripting
+- SQL Injection
+- Brute-force Attack
+## Catalog
 ┌ api \
-├─backup 備份\
-├─defense 防禦\
-├─lib 套件\
-├─log 日誌\
-├─permissions 權限\
-│  ├─admin 桿理鹽\
-│  └─user 使用者\
-├─public 公用\
-│  └─images 照片\
-└─views 顯示
-## 版本
+├─backup \
+├─defense \
+├─lib \
+├─log \
+├─permissions \
+│  ├─admin \
+│  └─user \
+├─public \
+│  └─images \
+└─views 
+## Version
 - v1.0 CONSTRUST✅
 - v1.1 ROUTE✅
 - v1.2 DATABASE✅
