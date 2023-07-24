@@ -14,18 +14,6 @@
 
     $time = $http -> time();
 
-    echo'
-         <html>
-            <head>
-            <link rel="stylesheet" href="./public/index.css">
-            <link rel="stylesheet" href="./public/photo.css">
-            <link rel="stylesheet" href="./public/about.css">
-             <script type="text/javascript" src="./public/index.js"></script> 
-            <meta charset="UTF-8">
-            <title>ChiXiao</title>
-         </head>
-    ';
-
     $sql -> config("root","","temp","list");
     $sql -> put_data(["id","ip","time"]);
 
@@ -42,13 +30,34 @@
     {
         if(@$_SESSION['index'])
         {
-
+            echo
+            '
+                <html>
+                    <head>
+                    <link rel="stylesheet" href="./public/index.css">
+                    <meta charset="UTF-8">
+                    <title>ChiXiao</title>
+                </head>
+            ';
         }
         else
         {
+            echo
+            '
+                <html>
+                    <head>
+                    <link rel="stylesheet" href="./public/index.css">
+                    <script type="text/javascript" src="./public/index.js"></script> 
+                    <meta charset="UTF-8">
+                    <title>ChiXiao</title>
+                </head>
+            ';
             echo $router->get(@$_SERVER['REQUEST_URI']);
         }
     }
 
-    echo '</html>';
+    echo
+    '
+        </html>
+    ';
 ?>
