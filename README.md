@@ -1,6 +1,6 @@
 # php實作路由 v1.5
-## 最具貢獻者
-- YouJia ![](https://github.com/chyhhwen/route-php/blob/main/youjia.gif?raw=true)
+## YouJia
+![](https://github.com/chyhhwen/route-php/blob/main/youjia.gif?raw=true)
 ## 目錄 
 ┌ api \
 ├─backup 備份\
@@ -14,10 +14,10 @@
 │  └─images 照片\
 └─views 顯示
 ## 版本
-- v1.0 專案建構✅
-- v1.1 路由傳輸✅
-- v1.2 資料庫✅
-- v1.3 IP確認✅
-- v1.4 LOG檔✅
+- v1.0 CONSTRUST✅
+- v1.1 ROUTE✅
+- v1.2 DATABASE✅
+- v1.3 IP-CHECK✅
+- v1.4 LOG✅
 - v1.5 SESSION✅
-- v1.5 API傳輸
+- v1.6 API
