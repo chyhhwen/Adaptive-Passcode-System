@@ -38,13 +38,18 @@ class router
                     else
                     {
                         header('Location: http://localhost/');
-                        exit();
                     }
                     break;
                 case '/public':
                     http_response_code(404);
                     return require "./views/error.php";
                     die();
+                case '/fun':
+                    $url = "https://www.youtube.com/watch?v=dQw4w9WgXcQ";
+                    echo "<script type='text/javascript'>";
+                    echo "window.location.href='$url'";
+                    echo "</script>";
+                    break;
                 default:
                     http_response_code(404);
                     return require "./views/error.php";
