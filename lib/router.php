@@ -53,9 +53,8 @@ class router
                             "user" => $_POST['user1'],
                             "pass" => $_POST['pass1']
                         ];
-                        $api -> request('http://localhost/api/sql_add.php',json_encode($data));
-
-                        //header('Location: http://localhost/');
+                        $api -> request('http://localhost/api/menber_add.php',json_encode($data));
+                        header('Location: http://localhost/');
                     }
                     else
                     {
