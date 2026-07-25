@@ -15,6 +15,13 @@ use PDO;
  */
 final class MemberRepository
 {
+    /**
+     * A real password_hash() output, used only to burn the same amount of CPU
+     * as a genuine check when the username does not exist. It corresponds to no
+     * usable password.
+     */
+    private const DUMMY_HASH = '$2y$10$E33.1bYy0TfXGN3usvucWeZrvK/HWE8Cns5fVMAIAqHnS4zkVT5I2';
+
     public function __construct(private readonly PDO $pdo)
     {
     }
@@ -41,7 +48,14 @@ final class MemberRepository
         if ($member === null) {
             // Spend roughly the same time as a real verification so that the
             // response time does not reveal whether the username exists.
-            password_verify($password, '$2y$10$usesomesillystringforsaltusesomesillystringfore');
+            //
+            // This must be a well-formed 60-character bcrypt hash. A malformed
+            // string happens to work today only because bcrypt reads a 22-char
+            // salt and ignores the rest, so crypt() still does the full round —
+            // but nothing guarantees password_verify() will keep calling crypt()
+            // for input it could reject outright, and the protection would then
+            // disappear with no test failing.
+            password_verify($password, self::DUMMY_HASH);
 
             return null;
         }

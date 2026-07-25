@@ -7,7 +7,6 @@ use App\View;
 
 /** @var string|null $error */
 ?>
-<body>
 <div class="login-page">
     <?php if (!empty($error)): ?>
         <p class="error-message"><?= View::e($error) ?></p>
@@ -41,4 +40,3 @@ use App\View;
         </div>
     </form>
 </div>
-</body>

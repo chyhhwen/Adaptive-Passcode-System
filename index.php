@@ -85,17 +85,19 @@ $router->get('/', static function () use ($view, $members): string {
 $router->post('/login', static function () use ($view, $members, $logger, $throttle, $clientIp): string {
     Csrf::verifyOrFail(Request::post(Csrf::FIELD));
 
-    // Checked before the password is even looked at, so a locked-out address
-    // gains nothing by continuing to guess.
-    if ($throttle->isLockedOut($clientIp)) {
-        // Attempts made while locked out still count. Without this the counter
-        // would freeze at the lockout threshold, and an address hammering the
-        // form would never accumulate enough failures to reach the permanent
-        // blocklist.
-        $blocked = $throttle->recordFailure($clientIp);
+    // The attempt is recorded before the password is looked at, and the counter
+    // it returns is what decides the outcome. Checking first and incrementing
+    // afterwards would let concurrent requests all pass the check before any of
+    // them had counted.
+    $attempt = $throttle->hit($clientIp);
 
-        $minutes = (int) ceil($throttle->secondsUntilRetry($clientIp) / 60);
-        $logger->write($blocked ? 'Blocklisted after repeated failures' : 'Throttled login attempt');
+    if ($attempt->justBlocklisted) {
+        $logger->write('Blocklisted after repeated attempts');
+    }
+
+    if ($attempt->lockedOut) {
+        $minutes = (int) ceil($attempt->secondsUntilRetry / 60);
+        $logger->write('Throttled login attempt');
         http_response_code(429);
 
         return $view->renderInLayout('login', 'ChiXiao', [
@@ -109,10 +111,7 @@ $router->post('/login', static function () use ($view, $members, $logger, $throt
     $member = $members->verifyCredentials($username, $password);
 
     if ($member === null) {
-        $blocked = $throttle->recordFailure($clientIp);
-
-        $logger->write(($blocked ? 'Blocklisted after repeated failures' : 'Failed login')
-            . ' for user: ' . $username);
+        $logger->write('Failed login for user: ' . $username);
 
         http_response_code(401);
 
@@ -130,8 +129,30 @@ $router->post('/login', static function () use ($view, $members, $logger, $throt
     exit;
 });
 
-$router->post('/register', static function () use ($view, $members, $logger): string {
+$router->post('/register', static function () use ($view, $members, $logger, $throttle, $clientIp): string {
     Csrf::verifyOrFail(Request::post(Csrf::FIELD));
+
+    // Registration is rate limited on the same per-IP counter as login.
+    // Without this, accounts could be created in unlimited numbers.
+    //
+    // The counter is deliberately NOT cleared on success: a script creating one
+    // account after another must keep accumulating until it is locked out, and
+    // eventually blocklisted.
+    $attempt = $throttle->hit($clientIp);
+
+    if ($attempt->justBlocklisted) {
+        $logger->write('Blocklisted after repeated attempts');
+    }
+
+    if ($attempt->lockedOut) {
+        $minutes = (int) ceil($attempt->secondsUntilRetry / 60);
+        $logger->write('Throttled registration attempt');
+        http_response_code(429);
+
+        return $view->renderInLayout('login', 'ChiXiao', [
+            'error' => "嘗試次數過多，請於 {$minutes} 分鐘後再試",
+        ]);
+    }
 
     $name = trim((string) Request::post('name1', ''));
     $username = trim((string) Request::post('user1', ''));
@@ -179,11 +200,27 @@ $router->post('/logout', static function (): string {
 $router->get('/about', static fn (): string => $view->renderInLayout('about', 'About', ['view' => $view]));
 
 $router->get('/photo', static function () use ($view, $pictures): string {
-    return $view->renderInLayout('photo', 'Photo', [
-        'view' => $view,
-        'pictures' => $pictures->all(),
-    ]);
+    return $view->renderInLayout(
+        'photo',
+        'Photo',
+        [
+            'view' => $view,
+            'pictures' => $pictures->all(),
+        ],
+        // Gallery grid rules, only needed on this page.
+        ['/public/photo.css']
+    );
 });
+
+// The forms live on the home page, so a bare GET of a form action — a bookmark
+// or a refresh after submitting — sends the visitor there rather than to a 405.
+$formRedirect = static function (): string {
+    header('Location: /');
+    exit;
+};
+
+$router->get('/login', $formRedirect);
+$router->get('/register', $formRedirect);
 
 $router->get('/youjia', static function () use ($renderError): string {
     $file = __DIR__ . '/youjia.jpg';

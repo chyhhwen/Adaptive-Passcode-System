@@ -8,7 +8,7 @@ use App\Repository\BlocklistRepository;
 use PDO;
 
 /**
- * Rate limits failed login attempts per IP address.
+ * Rate limits authentication attempts per IP address.
  *
  * This is the piece the project was missing: the `cache` table (ip / fre / time)
  * was designed to hold these counters but nothing ever read or wrote it, and the
@@ -16,13 +16,21 @@ use PDO;
  * attempt limit at all.
  *
  * Two tiers:
- *   - After maxAttempts failures inside decaySeconds, the IP is locked out
+ *   - After maxAttempts attempts inside decaySeconds, the IP is locked out
  *     until the window expires.
- *   - If failures keep accumulating up to blockThreshold, the IP is added to
+ *   - If attempts keep accumulating up to blockThreshold, the IP is added to
  *     the permanent `list` blocklist.
  *
- * Counting is keyed on REMOTE_ADDR (see App\Request::clientIp), so it cannot be
+ * Counting keys on REMOTE_ADDR (see App\Request::clientIp), so it cannot be
  * reset by sending a forged X-Forwarded-For header.
+ *
+ * Concurrency: hit() increments first and decides afterwards, in a single
+ * atomic statement. An earlier version checked the counter and incremented it
+ * in two steps, which let concurrent requests all read "not yet locked out"
+ * before any of them had incremented — measured at 7-9 guesses getting through
+ * a limit of 5. Reading the counter back after the increment is safe: a
+ * concurrent increment can only make the value we read larger, never smaller,
+ * so the decision can only become stricter.
  */
 final class LoginThrottle
 {
@@ -36,86 +44,78 @@ final class LoginThrottle
     }
 
     /**
-     * True when this IP has spent its attempts and must wait.
+     * Records one attempt and reports what should happen to it.
      */
-    public function isLockedOut(string $ip): bool
+    public function hit(string $ip): ThrottleResult
     {
-        $record = $this->currentWindow($ip);
+        $now = date('Y-m-d H:i:s');
+        $cutoff = date('Y-m-d H:i:s', time() - $this->decaySeconds);
 
-        return $record !== null && $record['fre'] >= $this->maxAttempts;
-    }
+        // One statement does insert-or-increment, and also restarts the window
+        // when the stored one has expired.
+        //
+        // MySQL evaluates the assignments left to right, so `fre` still sees the
+        // previous `time` value when it decides between restarting at 1 and
+        // incrementing. The `time` assignment must therefore come second.
+        $statement = $this->pdo->prepare(
+            'INSERT INTO `cache` (`ip`, `fre`, `time`) VALUES (:ip, 1, :now)
+             ON DUPLICATE KEY UPDATE
+                `fre`  = IF(`time` < :cutoff_a, 1, `fre` + 1),
+                `time` = IF(`time` < :cutoff_b, :now_b, `time`)'
+        );
 
-    /**
-     * Seconds remaining before the window resets. 0 when not locked out.
-     */
-    public function secondsUntilRetry(string $ip): int
-    {
-        $record = $this->currentWindow($ip);
+        // Placeholders are not reused: with emulation disabled MySQL binds each
+        // marker exactly once.
+        $statement->execute([
+            'ip' => $ip,
+            'now' => $now,
+            'cutoff_a' => $cutoff,
+            'cutoff_b' => $cutoff,
+            'now_b' => $now,
+        ]);
 
-        if ($record === null || $record['fre'] < $this->maxAttempts) {
-            return 0;
-        }
+        $window = $this->currentWindow($ip);
 
-        $elapsed = time() - $record['started'];
+        $attempts = $window['fre'] ?? 1;
+        $startedAt = $window['started'] ?? time();
 
-        return max(0, $this->decaySeconds - $elapsed);
-    }
+        $justBlocklisted = false;
 
-    /**
-     * Records one failed attempt. Returns true if this failure pushed the IP
-     * onto the permanent blocklist.
-     */
-    public function recordFailure(string $ip): bool
-    {
-        $record = $this->currentWindow($ip);
-
-        if ($record === null) {
-            // Opening a new window is an infrequent, natural moment to drop
-            // counters that have aged out, so the table stays bounded without
-            // needing a scheduled job.
-            $this->purgeExpired();
-
-            // No row, or the previous window has expired: start a fresh one.
-            $this->pdo
-                ->prepare('DELETE FROM `cache` WHERE `ip` = ?')
-                ->execute([$ip]);
-
-            $this->pdo
-                ->prepare('INSERT INTO `cache` (`ip`, `fre`, `time`) VALUES (?, 1, ?)')
-                ->execute([$ip, date('Y-m-d H:i:s')]);
-
-            return false;
-        }
-
-        $failures = $record['fre'] + 1;
-
-        $this->pdo
-            ->prepare('UPDATE `cache` SET `fre` = ? WHERE `ip` = ?')
-            ->execute([$failures, $ip]);
-
-        if ($failures >= $this->blockThreshold && !$this->blocklist->isBlocked($ip)) {
+        if ($attempts >= $this->blockThreshold && !$this->blocklist->isBlocked($ip)) {
             $this->blocklist->block($ip);
-
-            return true;
+            $justBlocklisted = true;
         }
 
-        return false;
+        $lockedOut = $attempts > $this->maxAttempts;
+
+        return new ThrottleResult(
+            attempts: $attempts,
+            lockedOut: $lockedOut,
+            justBlocklisted: $justBlocklisted,
+            secondsUntilRetry: $lockedOut
+                ? max(0, $this->decaySeconds - (time() - $startedAt))
+                : 0,
+        );
     }
 
     /**
-     * Clears the counter after a successful login, so an honest user who
-     * mistyped a few times is not penalised afterwards.
+     * Clears the counter after a successful authentication, so an honest user
+     * who mistyped a few times is not penalised afterwards.
      */
     public function clear(string $ip): void
     {
         $this->pdo
             ->prepare('DELETE FROM `cache` WHERE `ip` = ?')
             ->execute([$ip]);
+
+        // A successful sign-in is infrequent enough to be a good moment to tidy
+        // up counters left behind by other addresses.
+        $this->purgeExpired();
     }
 
     /**
-     * Drops counters whose window has already expired. Called opportunistically
-     * so the table does not grow without bound.
+     * Drops counters whose window has already expired, so the table stays
+     * bounded without needing a scheduled job.
      */
     public function purgeExpired(): void
     {
@@ -125,9 +125,6 @@ final class LoginThrottle
     }
 
     /**
-     * The active counter row for this IP, or null when there is none or the
-     * window has already expired.
-     *
      * @return array{fre: int, started: int}|null
      */
     private function currentWindow(string $ip): ?array
@@ -143,7 +140,7 @@ final class LoginThrottle
 
         $started = strtotime((string) $row['time']);
 
-        if ($started === false || (time() - $started) >= $this->decaySeconds) {
+        if ($started === false) {
             return null;
         }
 

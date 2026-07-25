@@ -41,12 +41,14 @@ final class View
 
     /**
      * @param array<string, mixed> $data
+     * @param array<int, string>   $styles Extra stylesheet paths for this page only
      */
-    public function renderInLayout(string $template, string $title, array $data = []): string
+    public function renderInLayout(string $template, string $title, array $data = [], array $styles = []): string
     {
         return $this->render('layout', [
             'title' => $title,
             'content' => $this->render($template, $data),
+            'styles' => $styles,
         ]);
     }
 

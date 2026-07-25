@@ -13,7 +13,7 @@ a framework.
 - **Routing** — `parse_url()` based route table mapping HTTP method + path to a handler
 - **Authentication** — registration and login with bcrypt password hashing (`password_hash` / `password_verify`), automatic rehash when the cost factor changes
 - **Session management** — `HttpOnly` / `SameSite` cookies, ID regeneration on login, logout
-- **Adaptive login throttling** — lockout thresholds that escalate with an address's failure rate
+- **Adaptive throttling** — lockout thresholds on login and registration that escalate with an address's attempt rate
 - **JSON API** — authenticated endpoints for reading and deleting picture records
 - **Configuration** — all credentials read from `.env`, nothing hardcoded
 
@@ -29,9 +29,16 @@ Every query uses parameterised prepared statements with
 than interpolated into the SQL string. API ids are validated as integers.
 
 **Brute-force Attack**
-Two-tier throttle: 5 failed logins within 15 minutes lock the address out
-(HTTP 429), and continued attempts up to 25 failures add it to a permanent
-blocklist that rejects every route.
+Two-tier throttle covering both login and registration: 5 attempts from one
+address within 15 minutes lock it out (HTTP 429), and continued attempts up to
+25 add it to a permanent blocklist that rejects every route. A successful login
+clears the counter; registration does not, so bulk account creation keeps
+accumulating toward the block.
+
+Each attempt is recorded *before* the credentials are examined, in a single
+atomic `INSERT ... ON DUPLICATE KEY UPDATE`, and the returned count is what
+decides the outcome. Checking the counter and then incrementing it would let
+concurrent requests all read "not yet locked out" before any had counted.
 
 **Cross-Site Request Forgery**
 A per-session token on every state-changing form and endpoint, compared with
@@ -66,7 +73,10 @@ cp .env.example .env
 #    adds indexes, creates the picture table. Safe to run repeatedly.
 php migrate.php
 
-# 4. Optional — swap the fallback loader for Composer's
+# 4. Optional — populate the photo gallery from public/images/
+php seed.php
+
+# 5. Optional — swap the fallback loader for Composer's
 composer install
 ```
 
@@ -102,6 +112,7 @@ On XAMPP the `mysql` and `php` executables are usually not on `PATH`; use
 ├─views                     templates
 ├─index.php                 front controller
 ├─migrate.php               database migration (CLI only)
+├─seed.php                  fills `picture` from public/images/ (CLI only)
 └─autoload.php              PSR-4 loader, defers to Composer when installed
 ```
 
@@ -116,8 +127,8 @@ On XAMPP the `mysql` and `php` executables are usually not on `PATH`; use
 
 ## Known limitations
 
-- The photo page reads from the `picture` table, which ships empty — `public/images/` holds files but no rows reference them yet.
 - Throttling is per-IP, so it does not slow a distributed attack spread across many addresses.
+- `log/` is append-only with no rotation or pruning, so it grows without bound.
 - The `secure` cookie flag only activates over HTTPS; deploying over plain HTTP transmits the session cookie in the clear.
 - No automated test suite.
 
