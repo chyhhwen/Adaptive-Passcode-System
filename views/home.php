@@ -2,13 +2,14 @@
 
 declare(strict_types=1);
 
+use App\View;
+
 /** @var App\View $view */
 ?>
 <body>
 <?= $view->render('nav') ?>
 <div class="box">
-    <h1>About</h1>
-    <p>Adaptive Passcode System</p>
+    <h1>歡迎回來，<?= View::e($userName ?? '') ?></h1>
 </div>
 <footer></footer>
 </body>

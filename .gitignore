@@ -1,0 +1,18 @@
+# Secrets — never commit real credentials.
+# If .env was committed before, adding it here does NOT remove it from history;
+# it must be purged with git filter-repo / BFG and the credentials rotated.
+.env
+
+# Database dumps: temp.sql contains real rows, including account data.
+/backup/
+
+# Runtime logs
+/log/*
+!/log/.gitkeep
+
+# IDE
+/.idea/
+
+# Composer — vendor/ is generated; composer.lock IS committed on purpose
+# so that everyone installs identical versions.
+/vendor/

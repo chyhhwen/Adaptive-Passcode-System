@@ -1,12 +1,56 @@
-AddHandler application/x-httpd-php80 .php
-RewriteEngine on
-RewriteCond $1 !^(index\.php)
+# The previous "AddHandler application/x-httpd-php80 .php" line named a handler
+# for PHP 8.0 while this environment runs 8.2. If such a handler does not exist,
+# Apache can end up serving .php files as plain text, which would publish the
+# source — including database credentials. XAMPP's mod_php already maps .php, so
+# no AddHandler is needed here.
+
+RewriteEngine On
+
+# Send everything that is not an existing file or directory to the front
+# controller. Real files (public assets, api/*.php) are served directly.
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
-RewriteCond $1 !^(index\.php|img|css|js|fonts|robots\.txt)
-RewriteRule ^(.*)$ index.php/$1 [L,QSA]
-<Files ~ "\.(inc|txt|sql|conf|env)$">
-Order allow,deny
-Deny from all
-</Files>
+RewriteRule ^(.*)$ index.php [L,QSA]
+
+# Application internals must never be reachable over HTTP.
+RedirectMatch 404 ^/(src|vendor|backup|log)/
+RedirectMatch 404 ^/api/_bootstrap\.php$
+RedirectMatch 404 ^/composer\.(json|lock)$
+RedirectMatch 404 ^/autoload\.php$
+
+# Block sensitive file types by extension as a second layer.
+<FilesMatch "\.(inc|txt|sql|conf|env|example|md|iml)$">
+    # Apache 2.4 syntax, with a fallback for 2.2. Using only the 2.2 form means
+    # the rule silently does nothing (or 500s) when mod_access_compat is absent.
+    <IfModule mod_authz_core.c>
+        Require all denied
+    </IfModule>
+    <IfModule !mod_authz_core.c>
+        Order allow,deny
+        Deny from all
+    </IfModule>
+</FilesMatch>
+
+# Dotfiles such as .env and .gitignore.
+<FilesMatch "^\.">
+    <IfModule mod_authz_core.c>
+        Require all denied
+    </IfModule>
+    <IfModule !mod_authz_core.c>
+        Order allow,deny
+        Deny from all
+    </IfModule>
+</FilesMatch>
+
+<IfModule mod_headers.c>
+    # Stop the browser guessing a different content type than the one sent.
+    Header always set X-Content-Type-Options "nosniff"
+    # Disallow framing, so the login form cannot be overlaid by another site.
+    Header always set X-Frame-Options "SAMEORIGIN"
+    Header always set Referrer-Policy "strict-origin-when-cross-origin"
+    # Inline scripts and styles are not used by these templates, so they stay
+    # blocked; that removes the most common way an injected <script> executes.
+    Header always set Content-Security-Policy "default-src 'self'; img-src 'self' data:; style-src 'self'; script-src 'self'; form-action 'self'; frame-ancestors 'self'; base-uri 'self'"
+</IfModule>
+
 Options -Indexes
